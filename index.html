@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>TERMINAL DE SÉCURITÉ - SENTINEL CITY</title>
+    <style>
+        body {
+            background-color: #050505;
+            color: #00ff41;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            text-shadow: 0 0 5px #00ff41;
+        }
+
+        #matrix-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background: linear-gradient(rgba(0, 255, 65, 0.1) 1px, transparent 1px) 0 0 / 20px 20px;
+        }
+
+        h1 { font-size: 2.5em; letter-spacing: 5px; margin-bottom: 10px; }
+
+        #timer {
+            font-size: 6em;
+            font-weight: bold;
+            color: #ff3333;
+            margin: 20px 0;
+            border: 2px solid #ff3333;
+            padding: 10px 40px;
+            box-shadow: 0 0 20px #ff3333;
+        }
+
+        .input-area {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        input {
+            background: transparent;
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 15px;
+            font-size: 1.5em;
+            width: 400px;
+            text-align: center;
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        button {
+            background: #00ff41;
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5em;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        button:hover { background: #008f11; }
+
+        #message {
+            margin-top: 20px;
+            font-size: 1.2em;
+            height: 30px;
+        }
+
+        .success { color: #00ff41; font-weight: bold; animation: blink 0.5s infinite; }
+        .error { color: #ff3333; }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="matrix-bg"></div>
+
+    <h1>ALERTE INTRUSION : SENTINEL CITY</h1>
+    <p>INSÉRER LE CODE DE DÉSAMORÇAGE AVANT LE VERROUILLAGE TOTAL</p>
+
+    <div id="timer">15:00</div>
+
+    <div class="input-area">
+        <input type="text" id="passcode" placeholder="ENTREZ LE CODE FINAL..." autocomplete="off">
+        <button onclick="checkCode()">VALIDER</button>
+    </div>
+
+    <div id="message"></div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const CODE_GAGNANT = "MAINTENANCE_QRCODE_SERVEUR"; // Change le code ici !
+        let tempsRestant = 15 * 60; // 15 minutes en secondes
+        // ---------------------
+
+        const timerDisplay = document.getElementById('timer');
+        const messageDisplay = document.getElementById('message');
+        const inputField = document.getElementById('passcode');
+
+        // Décompte du Timer
+        const countdown = setInterval(() => {
+            let minutes = Math.floor(tempsRestant / 60);
+            let secondes = tempsRestant % 60;
+
+            secondes = secondes < 10 ? '0' + secondes : secondes;
+            timerDisplay.innerHTML = `${minutes}:${secondes}`;
+
+            if (tempsRestant <= 0) {
+                clearInterval(countdown);
+                document.body.style.backgroundColor = "#330000";
+                timerDisplay.innerHTML = "ÉCHEC";
+                messageDisplay.innerHTML = "<span class='error'>SYSTÈME COMPROMIS - DONNÉES EFFACÉES</span>";
+            } else {
+                tempsRestant--;
+            }
+        }, 1000);
+
+        // Vérification du code
+        function checkCode() {
+            const codeEntré = inputField.value.trim().toUpperCase();
+
+            if (codeEntré === CODE_GAGNANT) {
+                clearInterval(countdown);
+                document.body.style.backgroundColor = "#001a00";
+                timerDisplay.style.color = "#00ff41";
+                timerDisplay.style.borderColor = "#00ff41";
+                timerDisplay.style.boxShadow = "0 0 20px #00ff41";
+                messageDisplay.innerHTML = "<span class='success'>ACCÈS ACCORDÉ - MENACE ÉLIMINÉE !</span>";
+                inputField.disabled = true;
+            } else {
+                messageDisplay.innerHTML = "<span class='error'>CODE ERRONÉ - TENTATIVE BLOQUÉE</span>";
+                tempsRestant -= 30; // Pénalité de 30 secondes
+                setTimeout(() => { messageDisplay.innerHTML = ""; }, 3000);
+            }
+        }
+
+        // Permet de valider avec la touche "Entrée"
+        inputField.addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                checkCode();
+            }
+        });
+    </script>
+</body>
+</html>
