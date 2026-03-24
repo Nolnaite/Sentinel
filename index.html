@@ -102,7 +102,7 @@
 
     <script>
         // --- CONFIGURATION ---
-        const CODE_GAGNANT = "TEST";
+       const CODE = "TEST" // Code Changé en TEST
         let tempsRestant = 30 * 60; // Mise à jour à 30 minutes
         // ---------------------
 
@@ -142,7 +142,7 @@
                 inputField.disabled = true;
             } else {
                 messageDisplay.innerHTML = "<span class='error'>CODE ERRONÉ - TENTATIVE BLOQUÉE</span>";
-                tempsRestant -= 60; // Pénalité de 60 secondes
+                tempsRestant = Math.max(0, tempsRestant - 60);
                 setTimeout(() => { messageDisplay.innerHTML = ""; }, 3000);
             }
         }
