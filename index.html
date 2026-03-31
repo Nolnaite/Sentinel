@@ -1,11 +1,3 @@
-Voici le code corrigé et optimisé. 
-
-### Les corrections apportées :
-1.  **Correction de variable** : Dans ton script, tu déclarais `const CODE`, mais tu vérifiais `CODE_GAGNANT`. J'ai harmonisé le tout sur `CODE_FINAL`.
-2.  **Gestion des pénalités** : J'ai ajouté une variable `tentatives` pour suivre le nombre d'erreurs et appliquer les malus croissants (2, 5, puis 10 minutes).
-3.  **Affichage dynamique** : Le message d'erreur affiche désormais le temps de pénalité subi pour que l'utilisateur comprenne pourquoi le chrono chute.
-
-```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -24,18 +16,7 @@ Voici le code corrigé et optimisé.
             margin: 0;
             overflow: hidden;
             text-shadow: 0 0 5px #00ff41;
-            transition: background-color 0.5s ease;
         }
-
-        #matrix-bg {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            opacity: 0.1;
-            background: linear-gradient(rgba(0, 255, 65, 0.1) 1px, transparent 1px) 0 0 / 20px 20px;
-        }
-
-        h1 { font-size: 2.5em; letter-spacing: 5px; margin-bottom: 10px; text-align: center; }
 
         #timer {
             font-size: 6em;
@@ -47,18 +28,13 @@ Voici le code corrigé et optimisé.
             box-shadow: 0 0 20px #ff3333;
         }
 
-        .input-area {
-            margin-top: 30px;
-            text-align: center;
-        }
-
         input {
             background: transparent;
             border: 1px solid #00ff41;
             color: #00ff41;
             padding: 15px;
             font-size: 1.5em;
-            width: 400px;
+            width: 350px;
             text-align: center;
             outline: none;
             text-transform: uppercase;
@@ -72,163 +48,94 @@ Voici le code corrigé et optimisé.
             font-size: 1.5em;
             cursor: pointer;
             font-weight: bold;
-            margin-left: 10px;
         }
-
-        button:hover { background: #008f11; }
 
         #message {
             margin-top: 20px;
             font-size: 1.2em;
             height: 30px;
-            text-align: center;
+            font-weight: bold;
         }
 
-        .success { color: #00ff41; font-weight: bold; animation: blink 0.5s infinite; }
-        .error { color: #ff3333; font-weight: bold; }
-
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0; }
-            100% { opacity: 1; }
-        }
+        .error { color: #ff3333; }
+        .success { color: #00ff41; }
     </style>
 </head>
 <body>
 
-    <div id="matrix-bg"></div>
-
-    <h1>ALERTE INTRUSION : SENTINEL CITY</h1>
-    <p>INSÉRER LE CODE DE DÉSAMORÇAGE AVANT LE VERROUILLAGE TOTAL</p>
-
+    <h1>ALERTE INTRUSION</h1>
     <div id="timer">30:00</div>
 
     <div class="input-area">
-        <input type="text" id="passcode" placeholder="ENTREZ LE CODE FINAL..." autocomplete="off">
-        <button onclick="checkCode()">VALIDER</button>
+        <input type="text" id="passcode" placeholder="CODE..." autofocus>
+        <button id="btn-valider">VALIDER</button>
     </div>
 
     <div id="message"></div>
 
     <script>
-        // --- CONFIGURATION ---
-        const CODE_FINAL = "TEST"; 
-        let tempsRestant = 30 * 60; // 30 minutes en secondes
-        let tentativesRatees = 0;
-        // ---------------------
+        // CONFIG
+        const CODE_CORRECT = "TEST";
+        let tempsRestant = 30 * 60;
+        let erreurs = 0;
 
-        const timerDisplay = document.getElementById('timer');
-        const messageDisplay = document.getElementById('message');
-        const inputField = document.getElementById('passcode');
+        const display = document.querySelector('#timer');
+        const input = document.querySelector('#passcode');
+        const msg = document.querySelector('#message');
+        const btn = document.querySelector('#btn-valider');
 
-        // Décompte du Timer
-        const countdown = setInterval(() => {
+        // Mise à jour du chrono visuel
+        function rafraichirChrono() {
+            let mins = Math.floor(tempsRestant / 60);
+            let secs = tempsRestant % 60;
+            display.textContent = `${mins}:${secs < 10 ? '0' + secs : secs}`;
+        }
+
+        // Compte à rebours
+        const interval = setInterval(() => {
             if (tempsRestant <= 0) {
-                clearInterval(countdown);
-                tempsRestant = 0;
-                finDePartie(false);
+                clearInterval(interval);
+                display.textContent = "ÉCHEC";
+                input.disabled = true;
             } else {
                 tempsRestant--;
-                updateDisplay();
+                rafraichirChrono();
             }
         }, 1000);
 
-        function updateDisplay() {
-            let minutes = Math.floor(tempsRestant / 60);
-            let secondes = tempsRestant % 60;
-            secondes = secondes < 10 ? '0' + secondes : secondes;
-            timerDisplay.innerHTML = `${minutes}:${secondes}`;
-        }
-
-        function finDePartie(victoire) {
-            if (victoire) {
-                document.body.style.backgroundColor = "#001a00";
-                timerDisplay.style.color = "#00ff41";
-                timerDisplay.style.borderColor = "#00ff41";
-                timerDisplay.style.boxShadow = "0 0 20px #00ff41";
-                messageDisplay.innerHTML = "<span class='success'>ACCÈS ACCORDÉ - MENACE ÉLIMINÉE !</span>";
+        // La fonction de vérification
+        function verifier() {
+            const saisie = input.value.trim().toUpperCase();
+            
+            if (saisie === CODE_CORRECT) {
+                clearInterval(interval);
+                document.body.style.backgroundColor = "#002200";
+                msg.innerHTML = "<span class='success'>ACCÈS ACCORDÉ</span>";
+                input.disabled = true;
             } else {
-                document.body.style.backgroundColor = "#330000";
-                timerDisplay.innerHTML = "ÉCHEC";
-                timerDisplay.style.color = "#ff3333";
-                messageDisplay.innerHTML = "<span class='error'>SYSTÈME COMPROMIS - DONNÉES EFFACÉES</span>";
-            }
-            inputField.disabled = true;
-        }
-
-        // Vérification du code avec malus progressif
-        function checkCode() {
-            const codeEntre = inputField.value.trim().toUpperCase();
-
-            if (codeEntre === CODE_FINAL) {
-                clearInterval(countdown);
-                finDePartie(true);
-            } else {
-                tentativesRatees++;
-                let penalite = 0;
-
-                // Logique de pénalité
-                if (tentativesRatees === 1) penalite = 2;
-                else if (tentativesRatees === 2) penalite = 5;
-                else penalite = 10; // 3ème fois et plus
-
-                // Appliquer la pénalité (en secondes)
-                tempsRestant = Math.max(0, tempsRestant - (penalite * 60));
+                erreurs++;
+                let malus = 0;
                 
-                messageDisplay.innerHTML = `<span class='error'>CODE ERRONÉ - PÉNALITÉ : -${penalite} MIN</span>`;
-                updateDisplay();
+                if (erreurs === 1) malus = 2;
+                else if (erreurs === 2) malus = 5;
+                else malus = 10;
 
-                // Effacer le message après 3 secondes
-                setTimeout(() => { 
-                    if (tempsRestant > 0) messageDisplay.innerHTML = ""; 
-                }, 3000);
-
-                inputField.value = ""; // Vide le champ pour le prochain essai
-                inputField.focus();
+                tempsRestant = Math.max(0, tempsRestant - (malus * 60));
+                rafraichirChrono();
+                
+                msg.innerHTML = `<span class='error'>ERREUR ! PÉNALITÉ -${malus} MIN</span>`;
+                input.value = "";
+                setTimeout(() => { msg.textContent = ""; }, 2000);
             }
         }
 
-        // Touche Entrée
-        inputField.addEventListener("keyup", function(event) {
-            if (event.key === "Enter") {
-                checkCode();
-            }
-        });
-    </script>
-</body>
-</html>
-```
-                document.body.style.backgroundColor = "#330000";
-                timerDisplay.innerHTML = "ÉCHEC";
-                messageDisplay.innerHTML = "<span class='error'>SYSTÈME COMPROMIS - DONNÉES EFFACÉES</span>";
-            } else {
-                tempsRestant--;
-            }
-        }, 1000);
+        // Événement CLIC sur le bouton
+        btn.addEventListener('click', verifier);
 
-        // Vérification du code
-        function checkCode() {
-            const codeEntré = inputField.value.trim().toUpperCase();
-
-            if (codeEntré === CODE_GAGNANT) {
-                clearInterval(countdown);
-                document.body.style.backgroundColor = "#001a00";
-                timerDisplay.style.color = "#00ff41";
-                timerDisplay.style.borderColor = "#00ff41";
-                timerDisplay.style.boxShadow = "0 0 20px #00ff41";
-                messageDisplay.innerHTML = "<span class='success'>ACCÈS ACCORDÉ - MENACE ÉLIMINÉE !</span>";
-                inputField.disabled = true;
-            } else {
-                messageDisplay.innerHTML = "<span class='error'>CODE ERRONÉ - TENTATIVE BLOQUÉE</span>";
-                tempsRestant = Math.max(0, tempsRestant - 60);
-                setTimeout(() => { messageDisplay.innerHTML = ""; }, 3000);
-            }
-        }
-
-        // Permet de valider avec la touche "Entrée"
-        inputField.addEventListener("keyup", function(event) {
-            if (event.key === "Enter") {
-                checkCode();
+        // Événement touche ENTRÉE
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                verifier();
             }
         });
     </script>
