@@ -36,6 +36,7 @@
             margin: 20px 0;
         }
 
+        /* ANIMATION TREMBLEMENT (TENSION) */
         .shake { animation: shakeAnim 0.1s infinite; }
         @keyframes shakeAnim {
             0% { transform: translate(1px, 1px); }
@@ -48,19 +49,6 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: white; z-index: 100; display: none;
         }
-
-        /* ÉCRAN BLEU WINDOWS (BSOD) */
-        #bsod {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #0078d7; color: #fff;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            z-index: 101; display: none; padding: 10% 15%;
-            text-align: left;
-        }
-
-        #bsod h1 { font-size: 8rem; margin: 0; }
-        #bsod h2 { font-size: 2rem; font-weight: normal; margin-top: 20px; }
-        #bsod p { font-size: 1.2rem; margin-top: 40px; line-height: 1.6; }
 
         input {
             background: transparent; border: 1px solid #0f0;
@@ -76,6 +64,7 @@
 
         #msg { margin-top: 20px; font-weight: bold; height: 20px; }
 
+        /* EFFET VICTOIRE */
         .win-state { border-color: #fff !important; box-shadow: 0 0 50px #0f0 !important; }
     </style>
 </head>
@@ -83,16 +72,6 @@
 
     <canvas id="matrix"></canvas>
     <div id="nuke-flash"></div>
-
-    <div id="bsod">
-        <h1>:(</h1>
-        <h2>Votre PC a rencontré un problème et doit redémarrer.</h2>
-        <p>
-            Nous collectons simplement des informations relatives aux erreurs, puis nous allons redémarrer pour vous.<br><br>
-            100% terminés<br><br>
-            <span style="font-size: 0.9rem;">Pour en savoir plus, vous pouvez rechercher cette erreur en ligne ultérieurement : CRITICAL_PROCESS_DIED (SENTINEL_CITY_CORE.SYS)</span>
-        </p>
-    </div>
 
     <div id="ui">
         <h1 style="letter-spacing: 10px;">CORE OVERLOAD</h1>
@@ -107,6 +86,7 @@
     </div>
 
     <script>
+        // CONFIGURATION
         const CODE_VRAI = "TEST";
         let temps = 30 * 60;
         let erreurs = 0;
@@ -117,7 +97,6 @@
         const btnEl = document.getElementById('valider');
         const uiEl = document.getElementById('ui');
         const flashEl = document.getElementById('nuke-flash');
-        const bsodEl = document.getElementById('bsod');
         const msgEl = document.getElementById('msg');
 
         // --- 1. PLUIE MATRIX ---
@@ -150,10 +129,68 @@
             if(!actif) return;
             temps--;
 
+            // Effet de tension (tremblement sous les 5 minutes)
             if (temps < 300) uiEl.classList.add('shake');
             
             if(temps <= 0) {
                 exploser();
             }
             updateDisplay();
-        }, 1
+        }, 1000);
+
+        function updateDisplay() {
+            const m = Math.floor(Math.max(0, temps) / 60);
+            const s = Math.max(0, temps) % 60;
+            timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // --- 3. ACTIONS FINALES ---
+        function exploser() {
+            actif = false;
+            clearInterval(interval);
+            flashEl.style.display = 'block';
+            flashEl.animate([
+                { opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, background: 'black' }
+            ], { duration: 4000, fill: 'forwards' });
+            
+            uiEl.style.display = 'none';
+        }
+
+        function gagner() {
+            actif = false;
+            clearInterval(interval);
+            clearInterval(matrixTimer);
+            uiEl.classList.remove('shake');
+            uiEl.classList.add('win-state');
+            timerEl.style.color = "#0f0";
+            timerEl.textContent = "SAFE";
+            msgEl.innerHTML = "<span style='color:#0f0'>SYSTÈME SÉCURISÉ</span>";
+            inputEl.disabled = true;
+            btnEl.disabled = true;
+        }
+
+        // --- 4. VERIFICATION ---
+        function verifier() {
+            if(!actif) return;
+            const val = inputEl.value.toUpperCase().trim();
+            if(val === CODE_VRAI) {
+                gagner();
+            } else {
+                erreurs++;
+                let malus = (erreurs === 1) ? 2 : (erreurs === 2) ? 5 : 10;
+                temps -= (malus * 60);
+                msgEl.innerHTML = `<span style='color:#f33'>ERREUR: -${malus} MIN</span>`;
+                inputEl.value = "";
+                updateDisplay();
+                // Petit flash rouge sur l'UI
+                uiEl.style.borderColor = "#f00";
+                setTimeout(() => uiEl.style.borderColor = "#0f0", 500);
+            }
+        }
+
+        btnEl.onclick = verifier;
+        inputEl.onkeydown = (e) => { if(e.key === "Enter") verifier(); };
+
+    </script>
+</body>
+</html>
