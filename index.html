@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>SENTINEL CITY - AUTO-DESTRUCTION</title>
+    <title>SENTINEL CITY - TERMINAL FINAL</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');
 
@@ -14,23 +14,53 @@
             justify-content: center; align-items: center;
         }
 
+        /* FOND MATRIX */
         #matrix {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; opacity: 0.3;
+            z-index: 1; opacity: 0.4;
         }
 
+        /* INTERFACE */
         #ui {
             position: relative; z-index: 10;
-            background: rgba(0, 10, 0, 0.95);
+            background: rgba(0, 15, 0, 0.9);
             border: 2px solid #0f0;
             padding: 50px; text-align: center;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            transition: all 0.3s;
         }
 
         #timer {
             font-size: 6rem; font-weight: bold; color: #f33;
-            text-shadow: 0 0 20px #f00; margin: 20px 0;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+            margin: 20px 0;
         }
+
+        .shake { animation: shakeAnim 0.1s infinite; }
+        @keyframes shakeAnim {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, -1px); }
+            100% { transform: translate(1px, -1px); }
+        }
+
+        /* EFFET FLASH NUCLÉAIRE */
+        #nuke-flash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 100; display: none;
+        }
+
+        /* ÉCRAN BLEU WINDOWS (BSOD) */
+        #bsod {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #0078d7; color: #fff;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            z-index: 101; display: none; padding: 10% 15%;
+            text-align: left;
+        }
+
+        #bsod h1 { font-size: 8rem; margin: 0; }
+        #bsod h2 { font-size: 2rem; font-weight: normal; margin-top: 20px; }
+        #bsod p { font-size: 1.2rem; margin-top: 40px; line-height: 1.6; }
 
         input {
             background: transparent; border: 1px solid #0f0;
@@ -41,55 +71,39 @@
         button {
             background: #0f0; color: #000; border: none;
             padding: 15px 30px; font-weight: bold; cursor: pointer;
-            margin-left: 10px;
+            margin-left: 10px; font-size: 1.1rem;
         }
 
-        /* --- EFFETS D'EXPLOSION ET CRASH --- */
-        #nuke-flash {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 100; display: none;
-        }
+        #msg { margin-top: 20px; font-weight: bold; height: 20px; }
 
-        #screen-burn {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #0000aa; color: white; z-index: 101;
-            display: none; padding: 50px; font-family: sans-serif;
-        }
-
-        .glitch { animation: glitchAnim 0.1s infinite; }
-        @keyframes glitchAnim {
-            0% { transform: translate(2px, 2px); filter: hue-rotate(90deg); }
-            50% { transform: translate(-2px, -2px); filter: invert(1); }
-            100% { transform: translate(1px, -1px); }
-        }
+        .win-state { border-color: #fff !important; box-shadow: 0 0 50px #0f0 !important; }
     </style>
 </head>
 <body>
 
     <canvas id="matrix"></canvas>
     <div id="nuke-flash"></div>
-    
-    <div id="screen-burn">
-        <h1 style="font-size: 5rem;">:(</h1>
-        <h2>Your PC ran into a problem and needs to restart.</h2>
-        <p>We're just collecting some error info, and then we'll restart for you.</p>
-        <p>100% complete</p>
-        <div style="font-size: 0.8rem; margin-top: 50px;">
-            Stop Code: CRITICAL_PROCESS_DIED<br>
-            What failed: SENTINEL_CITY_CORE.SYS
-        </div>
+
+    <div id="bsod">
+        <h1>:(</h1>
+        <h2>Votre PC a rencontré un problème et doit redémarrer.</h2>
+        <p>
+            Nous collectons simplement des informations relatives aux erreurs, puis nous allons redémarrer pour vous.<br><br>
+            100% terminés<br><br>
+            <span style="font-size: 0.9rem;">Pour en savoir plus, vous pouvez rechercher cette erreur en ligne ultérieurement : CRITICAL_PROCESS_DIED (SENTINEL_CITY_CORE.SYS)</span>
+        </p>
     </div>
 
     <div id="ui">
-        <h1 style="letter-spacing: 5px;">SÉCURITÉ RÉSEAU : ACTIVE</h1>
+        <h1 style="letter-spacing: 10px;">CORE OVERLOAD</h1>
         <div id="timer">30:00</div>
         
-        <div id="input-container">
-            <input type="text" id="code-input" placeholder="CODE DE DÉSACTIVATION" autofocus>
-            <button id="valider">VALIDER</button>
+        <div class="controls">
+            <input type="text" id="code-input" placeholder="ENTRER CODE" autofocus>
+            <button id="valider">DÉSAMORCER</button>
         </div>
         
-        <div id="msg" style="margin-top: 20px; color: #f33; height: 20px;"></div>
+        <div id="msg"></div>
     </div>
 
     <script>
@@ -103,48 +117,43 @@
         const btnEl = document.getElementById('valider');
         const uiEl = document.getElementById('ui');
         const flashEl = document.getElementById('nuke-flash');
-        const crashEl = document.getElementById('screen-burn');
+        const bsodEl = document.getElementById('bsod');
         const msgEl = document.getElementById('msg');
 
-        // --- MATRIX RAIN ---
+        // --- 1. PLUIE MATRIX ---
         const canvas = document.getElementById('matrix');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        const letters = "01010101ABCDEF";
-        const drops = Array(Math.floor(canvas.width/16)).fill(1);
+
+        const letters = "01010101ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
 
         function drawMatrix() {
             ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#0f0";
-            drops.forEach((y, i) => {
+            ctx.font = fontSize + "px monospace";
+            for(let i = 0; i < drops.length; i++) {
                 const text = letters[Math.floor(Math.random() * letters.length)];
-                ctx.fillText(text, i * 16, y * 16);
-                if(y * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
                 drops[i]++;
-            });
+            }
         }
-        let matrixInterval = setInterval(drawMatrix, 33);
+        let matrixTimer = setInterval(drawMatrix, 33);
 
-        // --- TIMER ---
+        // --- 2. LOGIQUE CHRONO ---
         const interval = setInterval(() => {
             if(!actif) return;
             temps--;
-            if (temps < 10) uiEl.classList.add('glitch'); // Glitch ultime avant explosion
-            if(temps <= 0) exploserPC();
-            updateDisplay();
-        }, 1000);
 
-        function updateDisplay() {
-            const m = Math.floor(Math.max(0, temps) / 60);
-            const s = Math.max(0, temps) % 60;
-            timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
-
-        // --- FONCTION EXPLOSER LE PC ---
-        function exploserPC() {
-            actif = false;
-            clearInterval(interval);
+            if (temps < 300) uiEl.classList.add('shake');
             
-            // 1
+            if(temps <= 0) {
+                exploser();
+            }
+            updateDisplay();
+        }, 1
