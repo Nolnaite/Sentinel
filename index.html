@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>SENTINEL CITY - TERMINAL FINAL</title>
+    <title>SENTINEL CITY - AUTO-DESTRUCTION</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');
 
@@ -14,40 +14,22 @@
             justify-content: center; align-items: center;
         }
 
-        /* FOND MATRIX */
         #matrix {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; opacity: 0.4;
+            z-index: 1; opacity: 0.3;
         }
 
-        /* INTERFACE */
         #ui {
             position: relative; z-index: 10;
-            background: rgba(0, 15, 0, 0.9);
+            background: rgba(0, 10, 0, 0.95);
             border: 2px solid #0f0;
             padding: 50px; text-align: center;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-            transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
         }
 
         #timer {
             font-size: 6rem; font-weight: bold; color: #f33;
-            text-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
-            margin: 20px 0;
-        }
-
-        /* ANIMATION TREMBLEMENT (TENSION) */
-        .shake { animation: shakeAnim 0.1s infinite; }
-        @keyframes shakeAnim {
-            0% { transform: translate(1px, 1px); }
-            50% { transform: translate(-1px, -1px); }
-            100% { transform: translate(1px, -1px); }
-        }
-
-        /* EFFET FLASH NUCLÉAIRE */
-        #nuke-flash {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 100; display: none;
+            text-shadow: 0 0 20px #f00; margin: 20px 0;
         }
 
         input {
@@ -59,34 +41,58 @@
         button {
             background: #0f0; color: #000; border: none;
             padding: 15px 30px; font-weight: bold; cursor: pointer;
-            margin-left: 10px; font-size: 1.1rem;
+            margin-left: 10px;
         }
 
-        #msg { margin-top: 20px; font-weight: bold; height: 20px; }
+        /* --- EFFETS D'EXPLOSION ET CRASH --- */
+        #nuke-flash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 100; display: none;
+        }
 
-        /* EFFET VICTOIRE */
-        .win-state { border-color: #fff !important; box-shadow: 0 0 50px #0f0 !important; }
+        #screen-burn {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0000aa; color: white; z-index: 101;
+            display: none; padding: 50px; font-family: sans-serif;
+        }
+
+        .glitch { animation: glitchAnim 0.1s infinite; }
+        @keyframes glitchAnim {
+            0% { transform: translate(2px, 2px); filter: hue-rotate(90deg); }
+            50% { transform: translate(-2px, -2px); filter: invert(1); }
+            100% { transform: translate(1px, -1px); }
+        }
     </style>
 </head>
 <body>
 
     <canvas id="matrix"></canvas>
     <div id="nuke-flash"></div>
+    
+    <div id="screen-burn">
+        <h1 style="font-size: 5rem;">:(</h1>
+        <h2>Your PC ran into a problem and needs to restart.</h2>
+        <p>We're just collecting some error info, and then we'll restart for you.</p>
+        <p>100% complete</p>
+        <div style="font-size: 0.8rem; margin-top: 50px;">
+            Stop Code: CRITICAL_PROCESS_DIED<br>
+            What failed: SENTINEL_CITY_CORE.SYS
+        </div>
+    </div>
 
     <div id="ui">
-        <h1 style="letter-spacing: 10px;">CORE OVERLOAD</h1>
+        <h1 style="letter-spacing: 5px;">SÉCURITÉ RÉSEAU : ACTIVE</h1>
         <div id="timer">30:00</div>
         
-        <div class="controls">
-            <input type="text" id="code-input" placeholder="ENTRER CODE" autofocus>
-            <button id="valider">DÉSAMORCER</button>
+        <div id="input-container">
+            <input type="text" id="code-input" placeholder="CODE DE DÉSACTIVATION" autofocus>
+            <button id="valider">VALIDER</button>
         </div>
         
-        <div id="msg"></div>
+        <div id="msg" style="margin-top: 20px; color: #f33; height: 20px;"></div>
     </div>
 
     <script>
-        // CONFIGURATION
         const CODE_VRAI = "TEST";
         let temps = 30 * 60;
         let erreurs = 0;
@@ -97,44 +103,36 @@
         const btnEl = document.getElementById('valider');
         const uiEl = document.getElementById('ui');
         const flashEl = document.getElementById('nuke-flash');
+        const crashEl = document.getElementById('screen-burn');
         const msgEl = document.getElementById('msg');
 
-        // --- 1. PLUIE MATRIX ---
+        // --- MATRIX RAIN ---
         const canvas = document.getElementById('matrix');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-
-        const letters = "01010101ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const fontSize = 16;
-        const columns = canvas.width / fontSize;
-        const drops = Array(Math.floor(columns)).fill(1);
+        const letters = "01010101ABCDEF";
+        const drops = Array(Math.floor(canvas.width/16)).fill(1);
 
         function drawMatrix() {
             ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#0f0";
-            ctx.font = fontSize + "px monospace";
-            for(let i = 0; i < drops.length; i++) {
+            drops.forEach((y, i) => {
                 const text = letters[Math.floor(Math.random() * letters.length)];
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                ctx.fillText(text, i * 16, y * 16);
+                if(y * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
                 drops[i]++;
-            }
+            });
         }
-        let matrixTimer = setInterval(drawMatrix, 33);
+        let matrixInterval = setInterval(drawMatrix, 33);
 
-        // --- 2. LOGIQUE CHRONO ---
+        // --- TIMER ---
         const interval = setInterval(() => {
             if(!actif) return;
             temps--;
-
-            // Effet de tension (tremblement sous les 5 minutes)
-            if (temps < 300) uiEl.classList.add('shake');
-            
-            if(temps <= 0) {
-                exploser();
-            }
+            if (temps < 10) uiEl.classList.add('glitch'); // Glitch ultime avant explosion
+            if(temps <= 0) exploserPC();
             updateDisplay();
         }, 1000);
 
@@ -144,53 +142,9 @@
             timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
-        // --- 3. ACTIONS FINALES ---
-        function exploser() {
+        // --- FONCTION EXPLOSER LE PC ---
+        function exploserPC() {
             actif = false;
             clearInterval(interval);
-            flashEl.style.display = 'block';
-            flashEl.animate([
-                { opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, background: 'black' }
-            ], { duration: 4000, fill: 'forwards' });
             
-            uiEl.style.display = 'none';
-        }
-
-        function gagner() {
-            actif = false;
-            clearInterval(interval);
-            clearInterval(matrixTimer);
-            uiEl.classList.remove('shake');
-            uiEl.classList.add('win-state');
-            timerEl.style.color = "#0f0";
-            timerEl.textContent = "SAFE";
-            msgEl.innerHTML = "<span style='color:#0f0'>SYSTÈME SÉCURISÉ</span>";
-            inputEl.disabled = true;
-            btnEl.disabled = true;
-        }
-
-        // --- 4. VERIFICATION ---
-        function verifier() {
-            if(!actif) return;
-            const val = inputEl.value.toUpperCase().trim();
-            if(val === CODE_VRAI) {
-                gagner();
-            } else {
-                erreurs++;
-                let malus = (erreurs === 1) ? 2 : (erreurs === 2) ? 5 : 10;
-                temps -= (malus * 60);
-                msgEl.innerHTML = `<span style='color:#f33'>ERREUR: -${malus} MIN</span>`;
-                inputEl.value = "";
-                updateDisplay();
-                // Petit flash rouge sur l'UI
-                uiEl.style.borderColor = "#f00";
-                setTimeout(() => uiEl.style.borderColor = "#0f0", 500);
-            }
-        }
-
-        btnEl.onclick = verifier;
-        inputEl.onkeydown = (e) => { if(e.key === "Enter") verifier(); };
-
-    </script>
-</body>
-</html>
+            // 1
