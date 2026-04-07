@@ -2,142 +2,382 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>TERMINAL DE SÉCURITÉ - SENTINEL CITY</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.E.N.T.I.N.E.L. CITY - TERMINAL DE SÉCURITÉ</title>
     <style>
-        body {
-            background-color: #050505;
-            color: #00ff41;
-            font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
+        /* --- RESET & FONT --- */
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;500;700&display=swap');
+
+        * {
             margin: 0;
-            overflow: hidden;
-            text-shadow: 0 0 5px #00ff41;
+            padding: 0;
+            box-sizing: border-box;
+            outline: none;
         }
 
+        body {
+            background-color: #000; /* Fond noir pur pour le contraste */
+            color: #0f0; /* Vert matrice de base */
+            font-family: 'Fira Code', monospace; /* Police de code moderne */
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.5s ease;
+        }
+
+        /* --- CANVAS MATRIX BACKGROUND --- */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Derrière tout */
+            opacity: 0.35; /* Subtil pour ne pas gêner la lecture */
+        }
+
+        /* --- INTERFACE CONTAINER (SUPER PROPRE) --- */
+        #ui-wrapper {
+            position: relative;
+            z-index: 10; /* Devant le canvas */
+            width: 90%;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(0, 10, 0, 0.85); /* Fond sombre semi-transparent */
+            border: 1px solid #0f0;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+            text-align: center;
+            backdrop-filter: blur(5px); /* Effet de flou moderne */
+        }
+
+        /* Titre principal élégant */
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        /* --- TIMER (NET & PRÉCIS) --- */
         #timer {
-            font-size: 6em;
-            font-weight: bold;
-            color: #ff3333;
-            margin: 20px 0;
-            border: 2px solid #ff3333;
-            padding: 10px 40px;
-            box-shadow: 0 0 20px #ff3333;
+            font-size: 5rem;
+            font-weight: 300; /* Léger pour l'élégance */
+            color: #ff3333; /* Rouge alerte */
+            font-family: 'Fira Code', monospace;
+            margin-bottom: 30px;
+            user-select: none;
+            text-shadow: 0 0 15px rgba(255, 51, 51, 0.5);
+            transition: color 0.5s ease, text-shadow 0.5s ease;
+        }
+
+        /* --- INPUT AREA --- */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         input {
-            background: transparent;
-            border: 1px solid #00ff41;
-            color: #00ff41;
-            padding: 15px;
-            font-size: 1.5em;
-            width: 350px;
-            text-align: center;
-            outline: none;
+            flex-grow: 1;
+            background: rgba(0, 20, 0, 0.5);
+            border: 1px solid #0f0;
+            border-radius: 4px;
+            color: #fff;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            font-family: 'Fira Code', monospace;
             text-transform: uppercase;
+            transition: box-shadow 0.3s ease;
+        }
+
+        input:focus {
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+        }
+
+        input::placeholder {
+            color: rgba(0, 255, 0, 0.3);
+            font-size: 1rem;
         }
 
         button {
-            background: #00ff41;
-            color: black;
+            background: #0f0;
+            color: #000;
             border: none;
-            padding: 15px 30px;
-            font-size: 1.5em;
+            border-radius: 4px;
+            padding: 0 30px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
             cursor: pointer;
-            font-weight: bold;
+            font-family: 'Fira Code', monospace;
+            transition: background 0.3s ease, transform 0.1s ease;
         }
 
-        #message {
-            margin-top: 20px;
-            font-size: 1.2em;
-            height: 30px;
-            font-weight: bold;
+        button:hover {
+            background: #fff; /* Blanc au survol pour la propreté */
         }
 
-        .error { color: #ff3333; }
-        .success { color: #00ff41; }
+        button:active {
+            transform: scale(0.97); /* Petit effet de clic */
+        }
+
+        /* --- FEEDBACK MESSAGES --- */
+        #message-area {
+            height: 25px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .error {
+            color: #ff3333;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        .success {
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+            animation: blink 1s infinite;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+
+        /* Désactivation des éléments */
+        input:disabled, button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
     </style>
 </head>
 <body>
 
-    <h1>ALERTE INTRUSION</h1>
-    <div id="timer">30:00</div>
+    <canvas id="matrix-canvas"></canvas>
 
-    <div class="input-area">
-        <input type="text" id="passcode" placeholder="CODE..." autofocus>
-        <button id="btn-valider">VALIDER</button>
+    <div id="ui-wrapper">
+        <div class="header">
+            <h1>SENTINEL.CITY</h1>
+            <p class="subtitle">TERMINAL DE DÉSAMORÇAGE - PROTOCOLE NIVEAU 5</p>
+        </div>
+
+        <div id="timer">30:00</div>
+
+        <div class="input-group">
+            <input type="text" id="passcode" placeholder="ENTREZ LE CODE FINAL..." autofocus maxlength="10">
+            <button id="btn-valider">VALIDER</button>
+        </div>
+
+        <div id="message-area"></div>
     </div>
 
-    <div id="message"></div>
-
     <script>
-        // CONFIG
+        // ==========================================
+        // --- 1. CONFIGURATION DU JEU (Inchangée) ---
+        // ==========================================
         const CODE_CORRECT = "TEST";
-        let tempsRestant = 30 * 60;
+        let tempsRestant = 30 * 60; // 30 minutes en secondes
         let erreurs = 0;
+        let jeuActif = true;
 
-        const display = document.querySelector('#timer');
-        const input = document.querySelector('#passcode');
-        const msg = document.querySelector('#message');
-        const btn = document.querySelector('#btn-valider');
+        const display = document.getElementById('timer');
+        const input = document.getElementById('passcode');
+        const msgArea = document.getElementById('message-area');
+        const btn = document.getElementById('btn-valider');
+        const wrapper = document.getElementById('ui-wrapper');
 
-        // Mise à jour du chrono visuel
-        function rafraichirChrono() {
-            let mins = Math.floor(tempsRestant / 60);
-            let secs = tempsRestant % 60;
-            display.textContent = `${mins}:${secs < 10 ? '0' + secs : secs}`;
+        // ==========================================
+        // --- 2. EFFET BACKGROUND "MATRIX" (NEUF) ---
+        // ==========================================
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Ajuster la taille du canvas à la fenêtre
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Caractères à utiliser (Katakana + Latin + Chiffres)
+        const chars = "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const charArray = chars.split('');
+
+        const fontSize = 16; // Taille des lettres
+        let columns = Math.floor(canvas.width / fontSize); // Nombre de colonnes
+        
+        // Tableau pour suivre la position Y de chaque colonne
+        let drops = [];
+        for (let i = 0; i < columns; i++) {
+            // Initialisation aléatoire pour un départ décalé
+            drops[i] = Math.random() * -100; 
         }
 
-        // Compte à rebours
-        const interval = setInterval(() => {
+        // Dessiner la pluie de code
+        function drawMatrix() {
+            // Fond noir très transparent pour créer l'effet de traînée (fade)
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#0f0"; // Couleur des lettres
+            ctx.font = fontSize + "px 'Fira Code'";
+
+            // Boucle sur les colonnes
+            for (let i = 0; i < drops.length; i++) {
+                // Choisir un caractère aléatoire
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                
+                // Dessiner le caractère
+                // x = i * fontSize, y = drops[i] * fontSize
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                // Si la goutte atteint le bas de l'écran, la remonter aléatoirement
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+
+                // Faire descendre la goutte (augmenter Y)
+                // VITESSE RAPIDE : on augmente la valeur ajoutée ici
+                drops[i] += 1.5; 
+            }
+        }
+
+        // Lancer l'animation (vitesse de rafraîchissement rapide)
+        setInterval(drawMatrix, 20); 
+
+
+        // ==========================================
+        // --- 3. LOGIQUE DU TERMINAL (Corrigée) ---
+        // ==========================================
+
+        // Mise à jour de l'affichage du temps (propre)
+        function rafraichirChrono() {
+            const mins = Math.floor(tempsRestant / 60);
+            const secs = tempsRestant % 60;
+            display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Boucle principale du compte à rebours
+        const chronoInterval = setInterval(() => {
+            if (!jeuActif) return;
+
             if (tempsRestant <= 0) {
-                clearInterval(interval);
-                display.textContent = "ÉCHEC";
-                input.disabled = true;
+                clearInterval(chronoInterval);
+                terminerJeu(false);
             } else {
                 tempsRestant--;
                 rafraichirChrono();
             }
         }, 1000);
 
-        // La fonction de vérification
-        function verifier() {
+        // Fonction de vérification du code
+        function verifierCode() {
+            if (!jeuActif) return;
+
             const saisie = input.value.trim().toUpperCase();
-            
+            input.value = ""; // Efface immédiatement
+
             if (saisie === CODE_CORRECT) {
-                clearInterval(interval);
-                document.body.style.backgroundColor = "#002200";
-                msg.innerHTML = "<span class='success'>ACCÈS ACCORDÉ</span>";
-                input.disabled = true;
+                terminerJeu(true);
             } else {
                 erreurs++;
-                let malus = 0;
-                
-                if (erreurs === 1) malus = 2;
-                else if (erreurs === 2) malus = 5;
-                else malus = 10;
-
-                tempsRestant = Math.max(0, tempsRestant - (malus * 60));
-                rafraichirChrono();
-                
-                msg.innerHTML = `<span class='error'>ERREUR ! PÉNALITÉ -${malus} MIN</span>`;
-                input.value = "";
-                setTimeout(() => { msg.textContent = ""; }, 2000);
+                appliquerPenalite();
             }
         }
 
-        // Événement CLIC sur le bouton
-        btn.addEventListener('click', verifier);
+        // Gestion des pénalités (2, 5, 10 min)
+        function appliquerPenalite() {
+            let malusMinutes = 0;
+            if (erreurs === 1) malusMinutes = 2;
+            else if (erreurs === 2) malusMinutes = 5;
+            else malusMinutes = 10; // 3+ erreurs
 
-        // Événement touche ENTRÉE
+            // Appliquer le malus
+            tempsRestant = Math.max(0, tempsRestant - (malusMinutes * 60));
+            rafraichirChrono();
+
+            // Feedback visuel agressif temporaire
+            display.style.color = "#fff";
+            display.style.textShadow = "0 0 20px #ff3333";
+            msgArea.innerHTML = `<span class="error">ERREUR ${erreurs} - PÉNALITÉ -${malusMinutes} MIN</span>`;
+            wrapper.style.borderColor = "#ff3333";
+            wrapper.style.boxShadow = "0 0 30px rgba(255, 51, 51, 0.4)";
+
+            // Retour à la normale après 2 secondes
+            setTimeout(() => {
+                if (jeuActif) {
+                    display.style.color = "#ff3333";
+                    display.style.textShadow = "0 0 15px rgba(255, 51, 51, 0.5)";
+                    wrapper.style.borderColor = "#0f0";
+                    wrapper.style.boxShadow = "0 0 30px rgba(0, 255, 0, 0.2)";
+                    msgArea.textContent = "";
+                }
+            }, 2000);
+        }
+
+        // Fin de partie (Victoire ou Échec)
+        function terminerJeu(victoire) {
+            jeuActif = false;
+            clearInterval(chronoInterval); // Stop le chrono
+            input.disabled = true;
+            btn.disabled = true;
+
+            if (victoire) {
+                display.textContent = "STABLE";
+                display.style.color = "#0f0";
+                display.style.textShadow = "0 0 20px #0f0";
+                msgArea.innerHTML = "<span class="success">SÉCURITÉ RÉTABLIE. MENACE ÉLIMINÉE.</span>";
+                wrapper.style.borderColor = "#0f0";
+                // On calme le fond Matrix en arrière-plan
+                document.getElementById('matrix-canvas').style.opacity = "0.1";
+            } else {
+                display.textContent = "ÉCHEC";
+                display.style.color = "#fff";
+                msgArea.innerHTML = "<span class="error">VERROUILLAGE TOTAL. DONNÉES CORROMPUES.</span>";
+                wrapper.style.borderColor = "#ff3333";
+                document.body.style.backgroundColor = "#200"; // Teinte rouge sombre en fond
+            }
+        }
+
+        // ==========================================
+        // --- 4. ÉVÉNEMENTS ---
+        // ==========================================
+
+        // Clic sur le bouton Valider
+        btn.addEventListener('click', verifierCode);
+
+        // Touche Entrée dans le champ de saisie
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                verifier();
+                verifierCode();
             }
         });
+
+        // Initialisation affichage
+        rafraichirChrono();
+
     </script>
 </body>
 </html>
