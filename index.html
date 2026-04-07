@@ -2,179 +2,195 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SENTINEL CITY - PROTOCOLE NUCLÉAIRE</title>
+    <title>SENTINEL CITY - TERMINAL FINAL</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-
-        body {
-            background-color: #000;
-            color: #0f0;
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000; color: #0f0;
             font-family: 'Fira Code', monospace;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            perspective: 1000px;
+            overflow: hidden; display: flex;
+            justify-content: center; align-items: center;
         }
 
-        #matrix-canvas {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0;
-            opacity: 0.3;
+        /* FOND MATRIX */
+        #matrix {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; opacity: 0.4;
         }
 
-        /* --- CONTAINER PRINCIPAL --- */
-        #ui-wrapper {
-            position: relative;
-            z-index: 10;
-            width: 90%;
-            max-width: 600px;
-            padding: 40px;
-            background: rgba(0, 10, 0, 0.9);
+        /* INTERFACE */
+        #ui {
+            position: relative; z-index: 10;
+            background: rgba(0, 15, 0, 0.9);
             border: 2px solid #0f0;
-            border-radius: 4px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 50px; text-align: center;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            transition: all 0.3s;
         }
 
-        /* --- EFFETS DE DÉFILEMENT (TENSION) --- */
-        .tension-shake {
-            animation: mini-shake 0.2s infinite;
+        #timer {
+            font-size: 6rem; font-weight: bold; color: #f33;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+            margin: 20px 0;
         }
 
-        @keyframes mini-shake {
+        /* ANIMATION TREMBLEMENT (TENSION) */
+        .shake { animation: shakeAnim 0.1s infinite; }
+        @keyframes shakeAnim {
             0% { transform: translate(1px, 1px); }
             50% { transform: translate(-1px, -1px); }
             100% { transform: translate(1px, -1px); }
         }
 
-        #timer {
-            font-size: 6rem;
-            font-weight: 700;
-            color: #ff3333;
-            margin-bottom: 20px;
-            text-shadow: 0 0 20px rgba(255, 51, 51, 0.5);
-            position: relative;
+        /* EFFET FLASH NUCLÉAIRE */
+        #nuke-flash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 100; display: none;
         }
 
-        /* Effet Glitch sur le Timer */
-        .glitch-timer {
-            animation: glitch 1s linear infinite;
-        }
-
-        @keyframes glitch {
-            2%, 64% { transform: translate(2px,0) skew(0deg); }
-            4%, 60% { transform: translate(-2px,0) skew(0deg); }
-            62% { transform: translate(0,0) skew(5deg); }
-        }
-
-        /* --- INPUTS --- */
-        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
         input {
-            flex-grow: 1;
-            background: rgba(0, 40, 0, 0.6);
-            border: 1px solid #0f0;
-            color: #fff;
-            padding: 15px;
-            font-family: 'Fira Code';
-            text-transform: uppercase;
+            background: transparent; border: 1px solid #0f0;
+            color: #fff; padding: 15px; font-size: 1.2rem;
+            width: 250px; text-align: center; outline: none;
         }
+
         button {
-            background: #0f0;
-            color: #000;
-            border: none;
-            padding: 0 25px;
-            font-weight: bold;
-            cursor: pointer;
+            background: #0f0; color: #000; border: none;
+            padding: 15px 30px; font-weight: bold; cursor: pointer;
+            margin-left: 10px; font-size: 1.1rem;
         }
 
-        /* --- EFFET EXPLOSION NUCLÉAIRE --- */
-        #flash {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: white;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-        }
+        #msg { margin-top: 20px; font-weight: bold; height: 20px; }
 
-        .nuke-active {
-            animation: nuke-flash 4s forwards;
-        }
-
-        @keyframes nuke-flash {
-            0% { opacity: 0; }
-            10% { opacity: 1; scale: 1; }
-            20% { background: #ff6600; }
-            100% { opacity: 1; background: black; }
-        }
-
-        .shockwave {
-            animation: shockwave-effect 0.5s ease-out;
-        }
-
-        @keyframes shockwave-effect {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.5); filter: brightness(5) saturate(2); }
-            100% { transform: scale(1); filter: brightness(1); }
-        }
-
-        /* --- EFFET VICTOIRE --- */
-        .success-glow {
-            box-shadow: 0 0 100px rgba(0, 255, 0, 0.6) !important;
-            border-color: #fff !important;
-        }
-
-        #scan-line {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 2px;
-            background: rgba(0, 255, 0, 0.5);
-            display: none;
-            z-index: 11;
-        }
-
+        /* EFFET VICTOIRE */
+        .win-state { border-color: #fff !important; box-shadow: 0 0 50px #0f0 !important; }
     </style>
 </head>
 <body>
 
-    <div id="flash"></div>
-    <canvas id="matrix-canvas"></canvas>
-    <div id="scan-line"></div>
+    <canvas id="matrix"></canvas>
+    <div id="nuke-flash"></div>
 
-    <div id="ui-wrapper">
-        <h1 style="letter-spacing: 5px; font-size: 1.2rem; margin-bottom: 20px;">SYSTEM STATUS: CRITICAL</h1>
-        
+    <div id="ui">
+        <h1 style="letter-spacing: 10px;">CORE OVERLOAD</h1>
         <div id="timer">30:00</div>
-
-        <div class="input-group">
-            <input type="text" id="passcode" placeholder="ENTER DECRYPTION CODE..." autofocus>
-            <button id="btn-valider">VALIDATE</button>
+        
+        <div class="controls">
+            <input type="text" id="code-input" placeholder="ENTRER CODE" autofocus>
+            <button id="valider">DÉSAMORCER</button>
         </div>
-
-        <div id="message-area" style="font-size: 0.8rem; color: #888;">WAITING FOR INPUT...</div>
+        
+        <div id="msg"></div>
     </div>
 
     <script>
-        const CODE_CORRECT = "TEST";
-        let tempsRestant = 30 * 60;
+        // CONFIGURATION
+        const CODE_VRAI = "TEST";
+        let temps = 30 * 60;
         let erreurs = 0;
-        let jeuActif = true;
+        let actif = true;
 
-        const display = document.getElementById('timer');
-        const input = document.getElementById('passcode');
-        const msgArea = document.getElementById('message-area');
-        const btn = document.getElementById('btn-valider');
-        const wrapper = document.getElementById('ui-wrapper');
-        const flash = document.getElementById('flash');
+        const timerEl = document.getElementById('timer');
+        const inputEl = document.getElementById('code-input');
+        const btnEl = document.getElementById('valider');
+        const uiEl = document.getElementById('ui');
+        const flashEl = document.getElementById('nuke-flash');
+        const msgEl = document.getElementById('msg');
 
-        // --- MATRIX BACKGROUND ---
-        const canvas = document.getElementById('matrix-canvas');
+        // --- 1. PLUIE MATRIX ---
+        const canvas = document.getElementById('matrix');
         const ctx = canvas.getContext('2d');
-        canvas
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const letters = "01010101ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#0f0";
+            ctx.font = fontSize + "px monospace";
+            for(let i = 0; i < drops.length; i++) {
+                const text = letters[Math.floor(Math.random() * letters.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        let matrixTimer = setInterval(drawMatrix, 33);
+
+        // --- 2. LOGIQUE CHRONO ---
+        const interval = setInterval(() => {
+            if(!actif) return;
+            temps--;
+
+            // Effet de tension (tremblement sous les 5 minutes)
+            if (temps < 300) uiEl.classList.add('shake');
+            
+            if(temps <= 0) {
+                exploser();
+            }
+            updateDisplay();
+        }, 1000);
+
+        function updateDisplay() {
+            const m = Math.floor(Math.max(0, temps) / 60);
+            const s = Math.max(0, temps) % 60;
+            timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // --- 3. ACTIONS FINALES ---
+        function exploser() {
+            actif = false;
+            clearInterval(interval);
+            flashEl.style.display = 'block';
+            flashEl.animate([
+                { opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, background: 'black' }
+            ], { duration: 4000, fill: 'forwards' });
+            
+            uiEl.style.display = 'none';
+        }
+
+        function gagner() {
+            actif = false;
+            clearInterval(interval);
+            clearInterval(matrixTimer);
+            uiEl.classList.remove('shake');
+            uiEl.classList.add('win-state');
+            timerEl.style.color = "#0f0";
+            timerEl.textContent = "SAFE";
+            msgEl.innerHTML = "<span style='color:#0f0'>SYSTÈME SÉCURISÉ</span>";
+            inputEl.disabled = true;
+            btnEl.disabled = true;
+        }
+
+        // --- 4. VERIFICATION ---
+        function verifier() {
+            if(!actif) return;
+            const val = inputEl.value.toUpperCase().trim();
+            if(val === CODE_VRAI) {
+                gagner();
+            } else {
+                erreurs++;
+                let malus = (erreurs === 1) ? 2 : (erreurs === 2) ? 5 : 10;
+                temps -= (malus * 60);
+                msgEl.innerHTML = `<span style='color:#f33'>ERREUR: -${malus} MIN</span>`;
+                inputEl.value = "";
+                updateDisplay();
+                // Petit flash rouge sur l'UI
+                uiEl.style.borderColor = "#f00";
+                setTimeout(() => uiEl.style.borderColor = "#0f0", 500);
+            }
+        }
+
+        btnEl.onclick = verifier;
+        inputEl.onkeydown = (e) => { if(e.key === "Enter") verifier(); };
+
+    </script>
+</body>
+</html>
