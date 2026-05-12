@@ -12,22 +12,21 @@
             font-family: 'Fira Code', monospace;
             overflow: hidden; display: flex;
             justify-content: center; align-items: center;
+            transition: background-color 1.5s ease, color 1.5s ease;
         }
 
-        /* FOND MATRIX */
         #matrix {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; opacity: 0.4;
+            z-index: 1; opacity: 0.4; transition: opacity 1s;
         }
 
-        /* INTERFACE */
         #ui {
             position: relative; z-index: 10;
             background: rgba(0, 15, 0, 0.9);
             border: 2px solid #0f0;
             padding: 50px; text-align: center;
             box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-            transition: all 0.3s;
+            transition: all 1s ease;
         }
 
         #timer {
@@ -36,60 +35,69 @@
             margin: 20px 0;
         }
 
-        /* ANIMATION TREMBLEMENT (TENSION) */
+        /* ANIMATIONS D'EXPLOSION */
         .shake { animation: shakeAnim 0.1s infinite; }
+        .shake-extreme { animation: shakeAnim 0.05s infinite; } /* Secousse violente */
+
         @keyframes shakeAnim {
-            0% { transform: translate(1px, 1px); }
-            50% { transform: translate(-1px, -1px); }
-            100% { transform: translate(1px, -1px); }
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            25% { transform: translate(-2px, -1px) rotate(1deg); }
+            50% { transform: translate(-3px, 0px) rotate(-1deg); }
+            75% { transform: translate(2px, 1px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
 
-        /* EFFET FLASH NUCLÉAIRE */
         #nuke-flash {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: white; z-index: 100; display: none;
         }
 
-        input {
-            background: transparent; border: 1px solid #0f0;
-            color: #fff; padding: 15px; font-size: 1.2rem;
-            width: 250px; text-align: center; outline: none;
+        /* ÉCRAN BRISÉ */
+        #broken-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://i.imgur.com/9v4JAnB.png') center/cover; /* Texture de verre brisé */
+            z-index: 102; display: none; opacity: 0.8; pointer-events: none;
         }
 
-        button {
-            background: #0f0; color: #000; border: none;
-            padding: 15px 30px; font-weight: bold; cursor: pointer;
-            margin-left: 10px; font-size: 1.1rem;
+        #bsod {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #0078d7; color: #fff;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            z-index: 101; display: none; padding: 10% 15%;
+            text-align: left;
         }
 
-        #msg { margin-top: 20px; font-weight: bold; height: 20px; }
-
-        /* EFFET VICTOIRE */
-        .win-state { border-color: #fff !important; box-shadow: 0 0 50px #0f0 !important; }
+        input { background: transparent; border: 1px solid #0f0; color: #fff; padding: 15px; width: 250px; text-align: center; outline: none; }
+        button { background: #0f0; color: #000; border: none; padding: 15px 30px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
-<body>
+<body class="shake-logic">
 
     <canvas id="matrix"></canvas>
     <div id="nuke-flash"></div>
+    <div id="broken-screen"></div>
+
+    <div id="bsod">
+        <h1>:(</h1>
+        <h2>SYSTÈME DÉTRUIT. CORE_MELTDOWN_CRITICAL</h2>
+        <p>Le matériel a subi des dommages irréversibles suite à l'explosion du noyau.<br><br>
+        Statut : MORTEL<br><br>
+        Recherche d'erreur : ANT_PAB_MARCO_LOST</p>
+    </div>
 
     <div id="ui">
-        <h1 style="letter-spacing: 10px;">CORE OVERLOAD</h1>
+        <h1 id="main-title" style="letter-spacing: 10px;">CORE OVERLOAD</h1>
         <div id="timer">30:00</div>
-        
         <div class="controls">
             <input type="text" id="code-input" placeholder="ENTRER CODE" autofocus>
             <button id="valider">DÉSAMORCER</button>
         </div>
-        
         <div id="msg"></div>
     </div>
 
     <script>
-        // CONFIGURATION
         const CODE_VRAI = "TEST";
         let temps = 30 * 60;
-        let erreurs = 0;
         let actif = true;
 
         const timerEl = document.getElementById('timer');
@@ -97,24 +105,20 @@
         const btnEl = document.getElementById('valider');
         const uiEl = document.getElementById('ui');
         const flashEl = document.getElementById('nuke-flash');
-        const msgEl = document.getElementById('msg');
+        const bsodEl = document.getElementById('bsod');
+        const brokenEl = document.getElementById('broken-screen');
 
-        // --- 1. PLUIE MATRIX ---
+        // Matrix Rain (inchangé)
         const canvas = document.getElementById('matrix');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
         const letters = "01010101ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const fontSize = 16;
         const columns = canvas.width / fontSize;
         const drops = Array(Math.floor(columns)).fill(1);
-
         function drawMatrix() {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#0f0";
-            ctx.font = fontSize + "px monospace";
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#0f0"; ctx.font = fontSize + "px monospace";
             for(let i = 0; i < drops.length; i++) {
                 const text = letters[Math.floor(Math.random() * letters.length)];
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
@@ -124,17 +128,13 @@
         }
         let matrixTimer = setInterval(drawMatrix, 33);
 
-        // --- 2. LOGIQUE CHRONO ---
+        // Chrono
         const interval = setInterval(() => {
             if(!actif) return;
             temps--;
-
-            // Effet de tension (tremblement sous les 5 minutes)
-            if (temps < 300) uiEl.classList.add('shake');
-            
-            if(temps <= 0) {
-                exploser();
-            }
+            if (temps < 10) uiEl.classList.add('shake-extreme'); // Panique totale
+            else if (temps < 300) uiEl.classList.add('shake');
+            if(temps <= 0) exploser();
             updateDisplay();
         }, 1000);
 
@@ -144,53 +144,46 @@
             timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
-        // --- 3. ACTIONS FINALES ---
         function exploser() {
             actif = false;
             clearInterval(interval);
-            flashEl.style.display = 'block';
-            flashEl.animate([
-                { opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, background: 'black' }
-            ], { duration: 4000, fill: 'forwards' });
+
+            // 1. L'écran tremble violemment
+            document.body.classList.add('shake-extreme');
             
-            uiEl.style.display = 'none';
+            // 2. Flash d'explosion
+            flashEl.style.display = 'block';
+            
+            setTimeout(() => {
+                // 3. Apparition des fissures et extinction du terminal
+                flashEl.style.backgroundColor = "black";
+                uiEl.style.display = 'none';
+                brokenEl.style.display = 'block'; // Affiche les fissures
+                
+                setTimeout(() => {
+                    // 4. On finit sur le BSOD "cassé"
+                    bsodEl.style.display = 'block';
+                    document.body.style.backgroundColor = "#0078d7";
+                    document.body.classList.remove('shake-extreme');
+                }, 2000);
+            }, 500);
         }
 
         function gagner() {
             actif = false;
-            clearInterval(interval);
-            clearInterval(matrixTimer);
-            uiEl.classList.remove('shake');
-            uiEl.classList.add('win-state');
-            timerEl.style.color = "#0f0";
+            clearInterval(interval); clearInterval(matrixTimer);
+            canvas.style.opacity = "0";
+            document.body.style.backgroundColor = "#fff";
+            uiEl.style.background = "#fff";
+            uiEl.style.border = "2px solid #000";
+            timerEl.style.color = "#2ecc71";
             timerEl.textContent = "SAFE";
-            msgEl.innerHTML = "<span style='color:#0f0'>SYSTÈME SÉCURISÉ</span>";
-            inputEl.disabled = true;
-            btnEl.disabled = true;
+            document.getElementById('main-title').textContent = "SYSTEM RESTORED";
+            document.getElementById('main-title').style.color = "#000";
+            document.getElementById('msg').innerHTML = "<span style='color:black'>Félicitations, Marco est en sécurité.</span>";
         }
 
-        // --- 4. VERIFICATION ---
-        function verifier() {
-            if(!actif) return;
-            const val = inputEl.value.toUpperCase().trim();
-            if(val === CODE_VRAI) {
-                gagner();
-            } else {
-                erreurs++;
-                let malus = (erreurs === 1) ? 2 : (erreurs === 2) ? 5 : 10;
-                temps -= (malus * 60);
-                msgEl.innerHTML = `<span style='color:#f33'>ERREUR: -${malus} MIN</span>`;
-                inputEl.value = "";
-                updateDisplay();
-                // Petit flash rouge sur l'UI
-                uiEl.style.borderColor = "#f00";
-                setTimeout(() => uiEl.style.borderColor = "#0f0", 500);
-            }
-        }
-
-        btnEl.onclick = verifier;
-        inputEl.onkeydown = (e) => { if(e.key === "Enter") verifier(); };
-
+        btnEl.onclick = () => { if(inputEl.value.toUpperCase() === CODE_VRAI) gagner(); else { temps -= 300; updateDisplay(); } };
     </script>
 </body>
 </html>
